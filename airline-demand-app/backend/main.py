@@ -77,6 +77,17 @@ def scrape_flights(req: ScrapeRequest):
     except Exception as e:
         return JSONResponse(status_code=500, content={"status": "Scraping error", "details": str(e)})
 
+@app.get("/api/dashboard")
+def dashboard_info():
+    """Return basic dashboard information and server status."""
+    csv_path = get_csv_path()
+    return {
+        "status": "online",
+        "data_available": os.path.exists(csv_path),
+        "csv_path": csv_path,
+        "endpoints": ["/api/analyze", "/api/scrape", "/api/ai-insight", "/api/dashboard"]
+    }
+
 @app.get("/api/ai-insight")
 def ai_insight():
     load_dotenv()  # Force reload .env every call (for debug)
