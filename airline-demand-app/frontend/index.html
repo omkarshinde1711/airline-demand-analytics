@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Airline Demand Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+  <h1 class="text-3xl font-extrabold text-blue-900 mb-6 flex items-center gap-2">
+    <span>✈️</span> Airline Demand Analytics Dashboard
+  </h1>
+  <div class="bg-white rounded-lg shadow p-4 mb-8 flex flex-col md:flex-row gap-4 items-center">
+    <div>
+      <label class="font-semibold mr-2">Origin:</label>
+      <select id="origin-input" class="border rounded p-1">
+        <option value="SFO">SFO</option>
+        <option value="LAX">LAX</option>
+        <option value="JFK">JFK</option>
+        <option value="DEL">DEL</option>
+        <option value="BOM">BOM</option>
+      </select>
+    </div>
+    <div>
+      <label class="font-semibold mr-2">Destination:</label>
+      <select id="destination-input" class="border rounded p-1">
+        <option value="LAX">LAX</option>
+        <option value="SFO">SFO</option>
+        <option value="JFK">JFK</option>
+        <option value="DEL">DEL</option>
+        <option value="BOM">BOM</option>
+      </select>
+    </div>
+    <div>
+      <label class="font-semibold mr-2">Start Date:</label>
+      <input id="start-date-input" type="date" class="border rounded p-1" value="2024-12-25">
+    </div>
+    <div>
+      <label class="font-semibold mr-2">Range:</label>
+      <select id="date-range-input" class="border rounded p-1">
+        <option value="1">1 day</option>
+        <option value="3">Next 3 days</option>
+        <option value="7" selected>Next 7 days</option>
+        <option value="14">Next 14 days</option>
+      </select>
+    </div>
+    <button id="scrape-btn" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">Scrape</button>
+  </div>
+  <div id="scrape-status" class="mb-6 text-center text-lg font-semibold text-indigo-700"></div>
+  <div id="summary-cards" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8"></div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+    <div class="bg-white rounded-lg shadow p-4">
+      <h2 class="text-lg font-semibold mb-2">Top Airlines by Avg Price</h2>
+      <canvas id="airlineBarChart" height="180"></canvas>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+      <h2 class="text-lg font-semibold mb-2">AI Insights</h2>
+      <div id="ai-insights" class="text-gray-800 text-base whitespace-pre-line min-h-[80px]">Loading...</div>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+    <div class="bg-white rounded-lg shadow p-4">
+      <h2 class="text-lg font-semibold mb-2">Price Distribution</h2>
+      <canvas id="priceHistChart" height="180"></canvas>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+      <h2 class="text-lg font-semibold mb-2">CO₂ Emissions by Airline</h2>
+      <canvas id="co2BarChart" height="180"></canvas>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+    <div class="bg-white rounded-lg shadow p-4 overflow-x-auto">
+      <h2 class="text-lg font-semibold mb-2">Top 5 Cheapest Flights</h2>
+      <table id="cheapest-table" class="min-w-full text-sm"></table>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 overflow-x-auto">
+      <h2 class="text-lg font-semibold mb-2">Sample Flights</h2>
+      <table id="sample-table" class="min-w-full text-sm"></table>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+    <div class="bg-white rounded-lg shadow p-4">
+      <h2 class="text-lg font-semibold mb-2">Demand Trend (Price Over Flights)</h2>
+      <canvas id="demandTrendChart" height="180"></canvas>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+      <h2 class="text-lg font-semibold mb-2">Flights by Stops</h2>
+      <canvas id="stopsPieChart" height="180"></canvas>
+    </div>
+  </div>
+  <div class="bg-white rounded-lg shadow p-4 overflow-x-auto mb-8">
+    <h2 class="text-lg font-semibold mb-2">All Flights <span class="text-yellow-500">(Top 5 highlighted)</span></h2>
+    <table id="all-flights-table" class="min-w-full text-sm"></table>
+  </div>
+  <footer class="text-center text-gray-500 mt-8">Powered by Playwright, FastAPI, and Chart.js</footer>
+  <script src="script.js"></script>
+</body>
+</html>

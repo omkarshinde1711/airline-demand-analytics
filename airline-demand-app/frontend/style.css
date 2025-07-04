@@ -1,0 +1,11 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 2em;
+    background: #f4f4f4;
+}
+h1 {
+    color: #333;
+}
+#chart {
+    margin-top: 2em;
+}

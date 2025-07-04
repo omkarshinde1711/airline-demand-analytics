@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+
+# Node/Frontend
+node_modules/
+dist/
+build/
+
+# Data/output
+scraper/csv_output/*.csv
+scraper/csv_output/*.log
+
+# VSCode
+.vscode/
