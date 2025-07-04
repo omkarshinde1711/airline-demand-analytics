@@ -1,20 +1,37 @@
 // Modern dashboard logic for /api/analyze
 function fetchAIInsight() {
   const aiDiv = document.getElementById('ai-insights');
-  aiDiv.textContent = 'Loading AI insight...';
+  aiDiv.innerHTML = `
+    <div class="flex items-center justify-center h-40 text-gray-400">
+      <i class="fas fa-spinner fa-spin mr-2"></i>
+      Generating AI insights...
+    </div>
+  `;
   fetch('http://127.0.0.1:8000/api/ai-insight')
     .then(r => r.json())
     .then(ai => {
       aiDiv.innerHTML = marked.parse(ai.ai_insights || 'No AI insights available.');
     })
     .catch(() => {
-      aiDiv.textContent = 'Failed to load AI insights.';
+      aiDiv.innerHTML = `
+        <div class="flex items-center justify-center h-40 text-red-400">
+          <i class="fas fa-exclamation-triangle mr-2"></i>
+          Failed to load AI insights
+        </div>
+      `;
     });
 }
 
 async function fetchAnalytics() {
   const summary = document.getElementById('summary-cards');
-  summary.innerHTML = "<div class='col-span-4 text-center text-gray-400'>Loading...</div>";
+  summary.innerHTML = `
+    <div class="col-span-4 flex items-center justify-center py-12">
+      <div class="text-center">
+        <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-4"></i>
+        <p class="text-gray-600 font-medium">Loading analytics...</p>
+      </div>
+    </div>
+  `;
   try {
     const response = await fetch('http://127.0.0.1:8000/api/analyze');
     const data = await response.json();
@@ -30,8 +47,20 @@ async function fetchAnalytics() {
     // Optionally, fetch AI insight automatically after scraping/analytics
     // fetchAIInsight();
   } catch (e) {
-    summary.innerHTML = `<div class='col-span-4 text-red-500'>Failed to load analytics.</div>`;
-    document.getElementById('ai-insights').textContent = 'Failed to load AI insights.';
+    summary.innerHTML = `
+      <div class="col-span-4 flex items-center justify-center py-12">
+        <div class="text-center">
+          <i class="fas fa-exclamation-triangle text-3xl text-red-500 mb-4"></i>
+          <p class="text-red-600 font-medium">Failed to load analytics</p>
+        </div>
+      </div>
+    `;
+    document.getElementById('ai-insights').innerHTML = `
+      <div class="flex items-center justify-center h-40 text-red-400">
+        <i class="fas fa-exclamation-triangle mr-2"></i>
+        Failed to load AI insights
+      </div>
+    `;
   }
 }
 
@@ -39,34 +68,49 @@ function renderSummaryCards(data) {
   const cards = [
     {
       label: 'Total Flights',
-      value: data.total_flights,
-      icon: '🛫',
-      color: 'bg-blue-100 text-blue-800'
+      value: data.total_flights || 0,
+      icon: 'fas fa-plane-departure',
+      color: 'bg-blue-50 border-blue-200',
+      iconColor: 'text-blue-600',
+      textColor: 'text-blue-900'
     },
     {
       label: 'Cheapest Price',
-      value: data.top_cheapest?.[0]?.Price ? `₹${data.top_cheapest[0].Price}` : '-',
-      icon: '💸',
-      color: 'bg-green-100 text-green-800'
+      value: data.top_cheapest?.[0]?.Price ? `₹${Math.round(data.top_cheapest[0].Price)}` : 'N/A',
+      icon: 'fas fa-tag',
+      color: 'bg-green-50 border-green-200',
+      iconColor: 'text-green-600',
+      textColor: 'text-green-900'
     },
     {
       label: 'Busiest Day',
-      value: data.busiest_day || '-',
-      icon: '📅',
-      color: 'bg-indigo-100 text-indigo-800'
+      value: data.busiest_day || 'N/A',
+      icon: 'fas fa-calendar-day',
+      color: 'bg-purple-50 border-purple-200',
+      iconColor: 'text-purple-600',
+      textColor: 'text-purple-900'
     },
     {
       label: 'Most Stops',
-      value: Object.keys(data.stops_count || {}).sort((a,b)=>data.stops_count[b]-data.stops_count[a])[0] || '-',
-      icon: '🛑',
-      color: 'bg-yellow-100 text-yellow-800'
+      value: Object.keys(data.stops_count || {}).sort((a,b)=>data.stops_count[b]-data.stops_count[a])[0] || 'N/A',
+      icon: 'fas fa-route',
+      color: 'bg-orange-50 border-orange-200',
+      iconColor: 'text-orange-600',
+      textColor: 'text-orange-900'
     }
   ];
+  
   document.getElementById('summary-cards').innerHTML = cards.map(card => `
-    <div class="rounded-lg shadow p-4 flex flex-col items-center ${card.color}">
-      <div class="text-3xl mb-2">${card.icon}</div>
-      <div class="text-xl font-bold">${card.value}</div>
-      <div class="text-gray-700 mt-1">${card.label}</div>
+    <div class="border rounded-xl p-6 ${card.color} hover:shadow-lg transition-shadow duration-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600 mb-1">${card.label}</p>
+          <p class="text-2xl font-bold ${card.textColor}">${card.value}</p>
+        </div>
+        <div class="bg-white p-3 rounded-lg shadow-sm">
+          <i class="${card.icon} text-xl ${card.iconColor}"></i>
+        </div>
+      </div>
     </div>
   `).join('');
 }
@@ -205,7 +249,6 @@ function renderAllFlightsTable(tableId, allRows, topRows) {
 }
 
 // Add scraping logic
-
 document.getElementById('scrape-btn').onclick = async function() {
   const origin = document.getElementById('origin-input').value;
   const destination = document.getElementById('destination-input').value;
@@ -217,7 +260,20 @@ document.getElementById('scrape-btn').onclick = async function() {
   end.setDate(start.getDate() + rangeDays - 1);
   const endDate = end.toISOString().slice(0, 10);
   const statusDiv = document.getElementById('scrape-status');
-  statusDiv.textContent = 'Scraping in progress...';
+  
+  // Update button and status
+  const btn = document.getElementById('scrape-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
+  btn.className = 'w-full bg-gray-400 text-white font-medium py-2 px-4 rounded-lg cursor-not-allowed';
+  
+  statusDiv.innerHTML = `
+    <div class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-50 text-blue-700 text-sm font-medium">
+      <i class="fas fa-spinner fa-spin mr-2"></i>
+      <span>Scraping flight data from ${origin} to ${destination}...</span>
+    </div>
+  `;
+  
   try {
     const response = await fetch('http://127.0.0.1:8000/api/scrape', {
       method: 'POST',
@@ -228,19 +284,35 @@ document.getElementById('scrape-btn').onclick = async function() {
     });
     if (!response.ok) throw new Error('Scraping failed');
     const result = await response.json();
-    statusDiv.textContent = result.status || 'Scraping complete!';
+    statusDiv.innerHTML = `
+      <div class="inline-flex items-center px-4 py-2 rounded-lg bg-green-50 text-green-700 text-sm font-medium">
+        <i class="fas fa-check-circle mr-2"></i>
+        <span>${result.status || 'Analysis complete!'}</span>
+      </div>
+    `;
     // Refresh dashboard after scraping
     fetchAnalytics();
   } catch (e) {
-    statusDiv.textContent = 'Scraping failed: ' + e.message;
+    statusDiv.innerHTML = `
+      <div class="inline-flex items-center px-4 py-2 rounded-lg bg-red-50 text-red-700 text-sm font-medium">
+        <i class="fas fa-exclamation-triangle mr-2"></i>
+        <span>Analysis failed: ${e.message}</span>
+      </div>
+    `;
+  } finally {
+    // Reset button
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-play mr-2"></i>Start Analysis';
+    btn.className = 'w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center justify-center';
   }
 };
 
 // Add a button to get AI insight manually
 const aiBtn = document.createElement('button');
-aiBtn.textContent = 'Get AI Insight';
-aiBtn.className = 'bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 mb-4';
+aiBtn.textContent = 'Refresh Insights';
+aiBtn.className = 'bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-200 flex items-center';
+aiBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Refresh Insights';
 aiBtn.onclick = fetchAIInsight;
-document.querySelector('#ai-insights').parentElement.prepend(aiBtn);
+document.querySelector('#ai-insights').parentElement.querySelector('h3').parentElement.appendChild(aiBtn);
 
 fetchAnalytics();

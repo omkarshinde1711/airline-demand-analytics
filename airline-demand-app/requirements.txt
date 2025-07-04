@@ -1,3 +1,6 @@
 # Requirements for backend
 fastapi
 uvicorn
+python-dotenv
+requests
+pandas

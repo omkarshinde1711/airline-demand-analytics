@@ -4,8 +4,7 @@ import base64
 from playwright.async_api import async_playwright
 from typing import List, Dict, Optional
 import pandas as pd
-import shutil
-import os
+from datetime import datetime, timedelta
 
 
 class FlightURLBuilder:
@@ -107,53 +106,58 @@ def save_to_csv(data: List[Dict[str, str]], filename: str = "flight_data.csv") -
     # Clean the saved CSV
     clean_csv(filename)
 
-async def scrape_flight_data(one_way_url):
-    flight_data = []
+def append_to_csv(data: List[Dict[str, str]], filename: str = "flight_data.csv") -> None:
+    """Append flight data to a CSV file, creating it if it doesn't exist."""
+    import os
+    if not data:
+        return
+    headers = list(data[0].keys())
+    file_exists = os.path.isfile(filename)
+    with open(filename, 'a', newline='', encoding='utf-8') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=headers)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerows(data)
+    clean_csv(filename)
 
+async def scrape_flight_data(one_way_url, append=False, filename="flight_data.csv"):
+    flight_data = []
     playwright, browser, page = await setup_browser()
-    
     try:
         await page.goto(one_way_url)
-        
-        # Wait for flight data to load
         await page.wait_for_selector(".pIav2d")
-        
-        # Get all flights and extract their information
         flights = await page.query_selector_all(".pIav2d")
         for flight in flights:
             flight_info = await scrape_flight_info(flight)
             flight_data.append(flight_info)
-        
-        # Save the extracted data in CSV format
-        save_to_csv(flight_data)
-            
+        if append:
+            append_to_csv(flight_data, filename)
+        else:
+            save_to_csv(flight_data, filename)
     finally:
         await browser.close()
         await playwright.stop()
 
-async def scrape_flights_to_csv(departure: str, destination: str, date: str, output_file="../data/flights.csv"):
-    """
-    Scrape flights for given params and save to CSV. Returns the path to the saved CSV.
-    """
-    one_way_url = FlightURLBuilder.build_url(
-        departure=departure,
-        destination=destination,
-        departure_date=date
-    )
-    print("Scraping URL:", one_way_url)
-    await scrape_flight_data(one_way_url)
-    # Move/rename the output file if needed
-    if os.path.exists("flight_data.csv"):
-        shutil.move("flight_data.csv", output_file)
-    return output_file
+async def scrape_flights_date_range(origin, destination, start_date, end_date, filename="flight_data.csv"):
+    current = datetime.strptime(start_date, "%Y-%m-%d")
+    end = datetime.strptime(end_date, "%Y-%m-%d")
+    first = True
+    while current <= end:
+        date_str = current.strftime("%Y-%m-%d")
+        url = FlightURLBuilder.build_url(origin, destination, date_str)
+        print(f"Scraping {origin} to {destination} for {date_str}")
+        await scrape_flight_data(url, append=not first, filename=filename)
+        first = False
+        current += timedelta(days=1)
+    print(f"Scraping complete. All data in {filename}")
 
 if __name__ == "__main__":
-    one_way_url = FlightURLBuilder.build_url(
-        departure="SFO",
-        destination="LAX",
-        departure_date="2025-07-25"
-    )
-    print("One-way URL:", one_way_url)
-
-    # Run the scraper
-    asyncio.run(scrape_flight_data(one_way_url))
+    import argparse
+    parser = argparse.ArgumentParser(description="Scrape flights for a date range.")
+    parser.add_argument("origin", type=str, help="Origin airport code")
+    parser.add_argument("destination", type=str, help="Destination airport code")
+    parser.add_argument("start_date", type=str, help="Start date (YYYY-MM-DD)")
+    parser.add_argument("end_date", type=str, help="End date (YYYY-MM-DD)")
+    parser.add_argument("--filename", type=str, default="flight_data.csv", help="CSV output filename")
+    args = parser.parse_args()
+    asyncio.run(scrape_flights_date_range(args.origin, args.destination, args.start_date, args.end_date, args.filename))
