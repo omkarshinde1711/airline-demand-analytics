@@ -10,6 +10,9 @@ A modern, full-stack airline demand analytics dashboard with real-time scraping,
 - **Frontend Dashboard**: Modern UI (Tailwind, Chart.js) with advanced tables, infographics, and markdown-rendered AI insights.
 - **Real-time Progress**: (Planned) Real-time scraping progress updates.
 
+  ![image](https://github.com/user-attachments/assets/d298275f-7cfb-45a6-b0b5-d2b8e1370e71)
+
+
 ## Project Structure
 
 ```
